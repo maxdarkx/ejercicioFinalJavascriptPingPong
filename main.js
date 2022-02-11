@@ -58,16 +58,48 @@ class Ball
         this.radius = radius;
         this.speedY = 0;
         this.speedX = 3;
+        this.speed = 3;
         this.board = board;
         this.direction = 1;
         board.ball = this;
         this.kind = "circle";
+        this.bounceAngle = 0;
+        this.maxBounceAngle = Math.PI / 12;
+    }
+
+    get width()
+    {
+        return this.radius * 2;
+    }
+
+    get height()
+    {
+        return this.radius * 2;
     }
 
     move()
     {
         this.x += this.speedX * this.direction;
         this.y += this.speedY;
+    }
+
+    collision(bar)
+    {
+        //sirve para reaccionar a la colision con una barra que se recibe como parametro
+        var relativeIntersectY = bar.y + ( bar.height/2 ) - this.y;
+        var normalizedIntersectY = relativeIntersectY / ( bar.height/2 );
+        this.bounceAngle = normalizedIntersectY * this.maxBounceAngle;
+        this.speedY = this.speed * -Math.sin(this.bounceAngle);
+        this.speedX = this.speed * Math.cos(this.bounceAngle);
+
+        if(this.x > (this.board.width / 2))
+        {
+            this.direction = -1;
+        }
+        else
+        {
+            this.direction = 1;
+        }
     }
 }
 
@@ -119,12 +151,62 @@ class BoardView
         this.context.clearRect(0,0,this.board.width, this.board.height);
     }
 
+    checkColisions()
+    {
+        for(var i = this.board.bars.length -1; i >= 0; i--)
+        {
+            var bar = this.board.bars[i];
+            if(this.hit(bar, this.board.ball))
+            {
+                this.board.ball.collision(bar);
+            }
+        }
+    }
+
+    hit(a, b)
+    {
+        //verifica si a colisiona con b
+        var golpe = false;
+
+        //colisiones horizontales
+        if(b.x +b.width >= a.x && b.x < a.x + a.width)
+        {
+            //colisiones verticales
+            if(b.y +b.height >= a.y && b.y < a.y + a.height)
+            {
+                golpe = true;
+            }
+        }
+
+        //colision de a con b
+        if(b.x <= a.x && b.x + b.width >= a.x + a.width)
+        {
+            if(b.y <= a.y && b.y +b.height >= a.y + a.height)
+            {
+                golpe = true;
+            }
+        }
+
+        //colision de b con a
+        if(a.x <= b.x && a.x + a.width >= b.x + b.width)
+        {
+            if(a.y <= b.y && a.y + a.height >= b.y + b.height)
+            {
+                golpe = true;
+            }
+        }
+        return golpe;
+
+
+    }
+
     play()
     {
         if(this.board.playing)
         {
             this.clearScreen();
             this.drawBoard();
+            this.checkColisions();
             this.board.ball.move();
         }
     }

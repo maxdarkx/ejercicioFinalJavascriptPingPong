@@ -59,8 +59,15 @@ class Ball
         this.speedY = 0;
         this.speedX = 3;
         this.board = board;
+        this.direction = 1;
         board.ball = this;
         this.kind = "circle";
+    }
+
+    move()
+    {
+        this.x += this.speedX * this.direction;
+        this.y += this.speedY;
     }
 }
 
@@ -99,6 +106,7 @@ class BoardView
                 context.fillRect(element.x, element.y, element.width, element.height);
                 break;
             case "circle":
+                context.beginPath();
                 context.arc(element.x, element.y, element.radius, 0, 7);
                 context.fill();
                 context.closePath();
@@ -113,15 +121,19 @@ class BoardView
 
     play()
     {
-        this.clearScreen();
-        this.drawBoard();
+        if(this.board.playing)
+        {
+            this.clearScreen();
+            this.drawBoard();
+            this.board.ball.move();
+        }
     }
 }
 
 function eventoPresionarTecla(bar1, bar2)
 {
     document.addEventListener("keypress", function(event){
-        //console.log(event.code);
+        console.log(event.code);
         if(event.code == "KeyW")
         {
             console.log("barra1 arriba: "+bar1.toString());
@@ -146,12 +158,20 @@ function eventoPresionarTecla(bar1, bar2)
             event.preventDefault();
             bar2.down();
         }
+        else if(event.code == "Space")
+        {
+            event.preventDefault();
+            board.playing = !board.playing;
+        }
     });
     
 }
 
 
 window.addEventListener("load", main);
+/*setTimeout(function(){
+    ball.direction = ball.direction*-1
+},3000);*/
 var canvas = document.getElementById('canvas');
 var board = new Board(800, 400);
 var bar1 = new Bar(20, 100, 40, 100, board);
@@ -170,6 +190,9 @@ function main()
 {
 //    console.log(bar1.toString());
 //    console.log(bar2.toString());
+    
     eventoPresionarTecla(bar1, bar2)
+    boardView.clearScreen();
+    boardView.drawBoard();
     controller();
 }

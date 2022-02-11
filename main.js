@@ -49,6 +49,24 @@ class Bar
     }
 }
 
+class Ball
+{
+    constructor(x, y, radius, board)
+    {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.speedY = 0;
+        this.speedX = 3;
+        this.board = board;
+        board.ball = this;
+        this.kind = "circle";
+    }
+}
+
+
+
+
 
 class BoardView
 {
@@ -74,43 +92,84 @@ class BoardView
 
     drawElement(context, element)
     {
-        if(element != null){
-            switch(element.kind)
-            {
-                case "rectangle":
-                    
-                    context.fillRect(element.x, element.y, element.width, element.height);
-                    break;
-            }
+        switch(element.kind)
+        {
+            case "rectangle":
+                
+                context.fillRect(element.x, element.y, element.width, element.height);
+                break;
+            case "circle":
+                context.arc(element.x, element.y, element.radius, 0, 7);
+                context.fill();
+                context.closePath();
+                break;
         }
+    }
 
+    clearScreen()
+    {
+        this.context.clearRect(0,0,this.board.width, this.board.height);
+    }
+
+    play()
+    {
+        this.clearScreen();
+        this.drawBoard();
     }
 }
 
-
-window.addEventListener("load", main);
-
-function main()
+function eventoPresionarTecla(bar1, bar2)
 {
-    var canvas = document.getElementById('canvas');
-    var board = new Board(800, 400);
-    var bar1 = new Bar(20, 100, 40, 100, board);
-    var bar2 = new Bar(740, 100, 40, 100, board);
-    var boardView = new BoardView(canvas, board);
-    boardView.drawBoard();
-
     document.addEventListener("keypress", function(event){
         //console.log(event.code);
         if(event.code == "KeyW")
         {
-            //console.log("arriba");
+            console.log("barra1 arriba: "+bar1.toString());
+            event.preventDefault();
             bar1.up();
         }
         else if(event.code == "KeyS")
         {
-            //console.log("abajo");
+            console.log("barra1 abajo: "+bar1.toString());
+            event.preventDefault();
             bar1.down();
         }
-        console.log(bar1.toString());
+        else if(event.code == "Numpad8")
+        {
+            console.log("barra2 arriba: "+bar2.toString());
+            event.preventDefault();
+            bar2.up();
+        }
+        else if(event.code == "Numpad2")
+        {
+            console.log("barra2 abajo: "+bar2.toString());
+            event.preventDefault();
+            bar2.down();
+        }
     });
+    
+}
+
+
+window.addEventListener("load", main);
+var canvas = document.getElementById('canvas');
+var board = new Board(800, 400);
+var bar1 = new Bar(20, 100, 40, 100, board);
+var bar2 = new Bar(740, 100, 40, 100, board);
+var ball = new Ball(350, 100, 10, board);
+var boardView = new BoardView(canvas, board);
+
+
+function controller()
+{
+    boardView.play();
+    window.requestAnimationFrame(controller);
+}
+
+function main()
+{
+//    console.log(bar1.toString());
+//    console.log(bar2.toString());
+    eventoPresionarTecla(bar1, bar2)
+    controller();
 }

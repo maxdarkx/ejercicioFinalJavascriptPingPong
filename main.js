@@ -30,16 +30,22 @@ class Bar
         this.board = board;
         this.board.bars.push(this);
         this.kind = "rectangle";
+        this.speed = 10;
     }
 
     down()
     {
-
+        this.y += this.speed;
     }
 
     up()
     {
+        this.y -= this.speed;
+    }
 
+    toString()
+    {
+        return "x: "+this.x +" y:"+this.y;
     }
 }
 
@@ -92,4 +98,19 @@ function main()
     var bar2 = new Bar(740, 100, 40, 100, board);
     var boardView = new BoardView(canvas, board);
     boardView.drawBoard();
+
+    document.addEventListener("keypress", function(event){
+        //console.log(event.code);
+        if(event.code == "KeyW")
+        {
+            //console.log("arriba");
+            bar1.up();
+        }
+        else if(event.code == "KeyS")
+        {
+            //console.log("abajo");
+            bar1.down();
+        }
+        console.log(bar1.toString());
+    });
 }

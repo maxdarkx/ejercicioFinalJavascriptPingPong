@@ -25,6 +25,8 @@ class Bar
     {
         this.x = x;
         this.y = y;
+        this.initX = x;
+        this.initY = y;
         this.width = width;
         this.height = height;
         this.board = board;
@@ -35,18 +37,30 @@ class Bar
 
     down()
     {
-        this.y += this.speed;
+        if(this.y < 300)
+        {
+            this.y += this.speed;
+        }
     }
 
     up()
     {
-        this.y -= this.speed;
+        if(this.y > 0)
+        {
+            this.y -= this.speed;
+        }
     }
 
     toString()
     {
         return "x: "+this.x +" y:"+this.y;
     }
+
+    reset()
+	{
+		this.x = this.initX;
+		this.y = this.initY;
+	}
 }
 
 class Ball
@@ -57,10 +71,12 @@ class Ball
         this.y = y;
         this.radius = radius;
         this.speedY = 0;
-        this.speedX = 3;
-        this.speed = 3;
+        this.speedX = 5;
+        this.speed = 5;
         this.board = board;
         this.direction = 1;
+        this.directionX = 1;
+        this.directionY = 1;
         board.ball = this;
         this.kind = "circle";
         this.bounceAngle = 0;
@@ -79,8 +95,17 @@ class Ball
 
     move()
     {
-        this.x += this.speedX * this.direction;
-        this.y += this.speedY;
+        if((this.y) > 10 && (this.y) < (this.board.height-10) )
+		{
+			this.x += this.speedX * this.directionX;
+			this.y += this.speedY * this.directionY;
+		}	
+		else
+		{
+			this.directionY = -this.directionY;
+			this.x += this.speedX * this.directionX;
+			this.y += this.speedY * this.directionY;
+		}
     }
 
     collision(bar)
@@ -94,13 +119,48 @@ class Ball
 
         if(this.x > (this.board.width / 2))
         {
-            this.direction = -1;
+            this.directionX = -1;
         }
         else
         {
-            this.direction = 1;
+            this.directionX = 1;
         }
     }
+    reset() 			//resetea el juego despues de que algun jugador anota un punto.
+	{					//La direccion a la que se dirigira la pelota se calcula al azar
+	
+		var choosedir = [-1,1];
+		var shuffled = choosedir.sort(() => Math.random() - 0.5);
+		this.initx = this.x;
+		this.inity = this.y;
+		this.direction_x = shuffled[0];
+		this.direction_y = 1;
+		this.bounce_angle = 0;
+		this.speed_x=5;
+		this.speed_y=0;
+		
+	}
+
+    score() 							//si la pelota toca alguno de los extremos izquierdo o derecho,
+	{ 									//se verifica quien anoto el punto
+	
+		var who = 0;
+		
+		if(this.x < 10)
+		{
+			this.x = 400;
+			this.y = 300;
+			who = 1;
+		}
+		else if (this.x > this.board.width-10)
+		{	
+			this.x = 400;
+			this.y = 300;
+			who = 2;
+		}
+        //console.log("score"+who);
+		return who;
+	}
 }
 
 
@@ -117,6 +177,8 @@ class BoardView
         this.canvas.width = board.width;
         this.canvas.height = board.height;
         this.context = canvas.getContext("2d");
+        this.score1 = 0;
+        this.score2 = 0;
 
     }
 
@@ -134,10 +196,11 @@ class BoardView
         switch(element.kind)
         {
             case "rectangle":
-                
+                context.fillStyle = "#FF0000";
                 context.fillRect(element.x, element.y, element.width, element.height);
                 break;
             case "circle":
+                context.fillStyle = "#0000FF";
                 context.beginPath();
                 context.arc(element.x, element.y, element.radius, 0, 7);
                 context.fill();
@@ -202,14 +265,66 @@ class BoardView
 
     play()
     {
+        let playerScore = 0;
         if(this.board.playing)
         {
             this.clearScreen();
             this.drawBoard();
             this.checkColisions();
-            this.board.ball.move();
+            playerScore = this.board.ball.score();
+            
+            if(playerScore == 0)
+            {
+                this.board.ball.move();
+            }
+            else if(playerScore == 1)
+            {
+                this.score1++;
+                this.printScore();
+                this.reset();
+            }
+            else if(playerScore == 2)
+            {
+                this.score2++;
+                this.printScore();
+                this.reset();
+            }
+            this.checkWin();
         }
     }
+
+    printScore() 				//mensaje que muestra el marcador en el HTML
+	{
+		document.getElementById("score").innerHTML="<p'>Player 1: "+this.score1
+										+ "</p><p>Player 2: "+this.score2+"</p>";
+	}
+
+    checkWin()
+    {
+        if(this.score1 >= 8)
+        {
+            this.board.playing = !this.board.playing;		
+			document.getElementById("score").innerHTML="<p'>Player 1 WINS!</p>";
+			setTimeout(function(){document.location.reload();},5000);
+        }
+        else if(this.score2 >= 8)
+        {
+            this.board.playing = !this.board.playing;		
+			document.getElementById("score").innerHTML="<p'>Player 2 WINS!</p>";
+			setTimeout(function(){document.location.reload();},5000);
+        }
+    }
+    
+    reset()
+	{
+		this.board.playing = !this.board.playing;
+		this.board.bars[0].reset();
+		this.board.bars[1].reset();
+		this.board.ball.reset();
+		this.clearScreen();
+		this.drawBoard();
+		//console.log(ball.toString());
+	}
 }
 
 function eventoPresionarTecla(bar1, bar2)
